@@ -1,0 +1,1 @@
+java -cp lib/gsender.jar:lib/args4j-2.0.21.jar:lib/mail-1.5.0-b01.jar cz.fhsoft.gsender.Sender "$@"

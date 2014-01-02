@@ -32,7 +32,9 @@ class wpl(
   ) {
 
   # Install Apache Tomcat server
-  include tomcat6
+  class { 'tomcat6':
+    config_hash => {'JAVA_OPTS' => '-Xms128m -Xmx256m'},
+  }
 
   file { "${tomcat6::params::catalina_home['CATALINA_HOME']}/conf/server.xml":
     source => 'puppet:///modules/wpl/server.xml',
@@ -44,14 +46,22 @@ class wpl(
   class { 'apache':
     default_vhost => false,
     purge_configs => false,
-    require => Class['tomcat6'],
+    mpm_module    => false,
+    require       => Class['tomcat6'],
+  }
+
+  # Minimize resources for Apache HTTP server
+  class { 'apache::mod::prefork':
+    startservers    => '1',
+    minspareservers => '1',
+    maxspareservers => '1',
   }
 
   apache::vhost { 'wpl':
-    ip => '*',
-    port => 80,
+    ip         => '*',
+    port       => 80,
     servername => 'localhost',
-    docroot => '/var/www/html',
+    docroot    => '/var/www/html',
     proxy_pass => [
       { 'path' => '/', 'url' => 'ajp://localhost:8008/' },
     ],

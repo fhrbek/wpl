@@ -82,7 +82,7 @@ class wpl(
   }
 
   cron { 'wplmail':
-    command => "curl -sSG http://localhost/cron/invitations",
+    command => "curl -sSG http://localhost/wpl/cron/invitations",
     user    => 'root',
     hour    => 4,
     minute  => 0,

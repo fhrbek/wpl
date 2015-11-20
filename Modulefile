@@ -8,4 +8,6 @@ description 'UNKNOWN'
 project_page 'UNKNOWN'
 
 dependency 'puppetlabs/apache', '>= 0.9.0'
-dependency 'yguenane/tomcat6', '>= 0.0.5'
+dependency 'puppetlabs/java', '>= 1.4.2'
+dependency 'puppetlabs/tomcat', '>= 1.3.2'
+dependency 'puppetlabs/postgresql', '>= 4.6.0'

@@ -31,15 +31,42 @@ class wpl(
   $backupEmailRecipient = undef,
   ) {
 
-  # Install Apache Tomcat server
-  class { 'tomcat6':
-    config_hash => {'JAVA_OPTS' => '-Xms128m -Xmx256m'},
+  $catalina_base = '/usr/share/tomcat'
+
+  # Install Java
+  class { 'java': }
+
+  # Install Apache Tomcat server from EPEL
+  class { 'tomcat':
+    install_from_source => false,
+  }
+  class { 'epel': }->
+  tomcat::instance{ 'default':
+      package_name => 'tomcat',
+  }->
+
+  # Start Apache Tomcat service
+  tomcat::service { 'default':
+    use_jsvc     => false,
+    use_init     => true,
+    service_name => 'tomcat',
   }
 
-  file { "${tomcat6::params::catalina_home['CATALINA_HOME']}/conf/server.xml":
-    source => 'puppet:///modules/wpl/server.xml',
-    seltype => 'etc_t',
-    notify => Service['tomcat6'],
+  # Disable default HTTP connector
+  tomcat::config::server::connector { 'tomcat-http':
+    catalina_base => $catalina_base,
+    connector_ensure => absent,
+    protocol => 'HTTP/1.1',
+  }
+
+  # Enable AJP connector
+  tomcat::config::server::connector { 'tomcat-ajp':
+    catalina_base => $catalina_base,
+    protocol => 'AJP/1.3',
+    port => '8008',
+    additional_attributes => {
+      'redirectPort' => '8080'
+    },
   }
 
   # Install Apache HTTP server
@@ -47,7 +74,7 @@ class wpl(
     default_vhost => false,
     purge_configs => false,
     mpm_module    => false,
-    require       => Class['tomcat6'],
+    require       => Class['tomcat'],
   }
 
   # Minimize resources for Apache HTTP server
@@ -57,7 +84,7 @@ class wpl(
     maxspareservers => '1',
   }
 
-  apache::vhost { 'wpl':
+  apache::vhost { '_default_':
     ip         => '*',
     port       => 80,
     servername => 'localhost',
@@ -82,7 +109,7 @@ class wpl(
   }
 
   cron { 'wplmail':
-    command => "curl -sSG http://localhost/wpl/cron/invitations",
+    command => "curl -sSG http://localhost/cron/invitations",
     user    => 'root',
     hour    => 4,
     minute  => 0,

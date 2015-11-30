@@ -31,6 +31,32 @@ class wpl(
   $backupEmailRecipient = undef,
   ) {
 
+  include postgresql::server
+
+  postgresql::server::db { 'wittmannpokerleague':
+    user     => 'wpldata',
+    password => 'md5ac5ed10a8c235ed8737bb3dcc4968fe3',
+    encoding => 'utf8',
+  }
+
+  package { 'wget':
+    ensure => installed,
+  }
+
+  $staging_dir = '/opt/staging'
+  $staging_file = "$staging_dir/latest.backup"
+
+  file { $staging_dir:
+    ensure => directory,
+  }
+
+  exec { 'load_db':
+    path => '/bin:/usr/bin',
+    command => "wget https://github.com/fhrbek/wpl-staging/raw/master/latest.backup -O $staging_file;su - postgres -c \"pg_restore -d wittmannpokerleague $staging_file -e\"",
+    onlyif => 'su - postgres -c "psql wittmannpokerleague -c \'\\d\' -qt"|wc -w|grep \'^0$\'',
+    require => [Postgresql::Server::Db['wittmannpokerleague'], Package['wget'], File[$staging_dir]],
+  }
+
   $catalina_base = '/usr/share/tomcat'
 
   # Install Java
@@ -69,6 +95,13 @@ class wpl(
     },
   }
 
+  tomcat::war { 'wpl':
+    catalina_base => $catalina_base,
+    war_name => 'ROOT.war',
+    war_source => 'https://github.com/fhrbek/wpl-staging/raw/master/wpl.war',
+    require => Exec['load_db']
+  }
+
   # Install Apache HTTP server
   class { 'apache':
     default_vhost => false,
@@ -95,14 +128,6 @@ class wpl(
   }
 
   apache::mod { 'proxy_ajp': }
-
-  include postgresql::server
-
-  postgresql::server::db { 'wittmannpokerleague':
-    user     => 'wpldata',
-    password => 'md5ac5ed10a8c235ed8737bb3dcc4968fe3',
-    encoding => 'utf8',
-  }
 
   package { 'curl':
     ensure => installed,

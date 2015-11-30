@@ -60,30 +60,24 @@ class wpl(
   $catalina_base = '/usr/share/tomcat'
 
   # Install Java
-  class { 'java': }
+  class { 'java': }->
 
   # Install Apache Tomcat server from EPEL
   class { 'tomcat':
     install_from_source => false,
-  }
+  }->
   class { 'epel': }->
   tomcat::instance{ 'default':
       package_name => 'tomcat',
   }->
-
-  # Start Apache Tomcat service
-  tomcat::service { 'default':
-    use_jsvc     => false,
-    use_init     => true,
-    service_name => 'tomcat',
-  }
 
   # Disable default HTTP connector
   tomcat::config::server::connector { 'tomcat-http':
     catalina_base => $catalina_base,
     connector_ensure => absent,
     protocol => 'HTTP/1.1',
-  }
+    notify => Tomcat::Service['default'],
+  }->
 
   # Enable AJP connector
   tomcat::config::server::connector { 'tomcat-ajp':
@@ -93,7 +87,15 @@ class wpl(
     additional_attributes => {
       'redirectPort' => '8080'
     },
-  }
+    notify => Tomcat::Service['default'],
+  }->
+
+  # Start Apache Tomcat service
+  tomcat::service { 'default':
+    use_jsvc     => false,
+    use_init     => true,
+    service_name => 'tomcat',
+  }->
 
   tomcat::war { 'wpl':
     catalina_base => $catalina_base,
@@ -107,7 +109,7 @@ class wpl(
     default_vhost => false,
     purge_configs => false,
     mpm_module    => false,
-    require       => Class['tomcat'],
+    require       => Tomcat::Service['default'],
   }
 
   # Minimize resources for Apache HTTP server

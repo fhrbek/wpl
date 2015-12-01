@@ -29,7 +29,14 @@ class wpl(
   $backupEmailFrom      = undef,
   $backupEmailPassword  = undef,
   $backupEmailRecipient = undef,
+  $tzRegion             = 'Europe',
+  $tzLocality           = 'London',
   ) {
+
+  class { 'timezone':
+    region   => $tzRegion,
+    locality => $tzLocality,
+  }
 
   include postgresql::server
 

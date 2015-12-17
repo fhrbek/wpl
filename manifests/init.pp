@@ -50,8 +50,12 @@ class wpl(
     ensure => installed,
   }
 
+  package { 'gzip':
+    ensure => installed,
+  }
+
   $staging_dir = '/opt/staging'
-  $staging_file = "$staging_dir/latest.backup"
+  $staging_file = "$staging_dir/latest.backup.gz"
 
   file { $staging_dir:
     ensure => directory,
@@ -59,9 +63,9 @@ class wpl(
 
   exec { 'load_db':
     path => '/bin:/usr/bin',
-    command => "wget https://github.com/fhrbek/wpl-staging/raw/master/latest.backup -O $staging_file;su - postgres -c \"pg_restore -d wittmannpokerleague $staging_file -e\"",
+    command => "wget https://github.com/fhrbek/wpl-staging/raw/master/latest.backup -O $staging_file;su - postgres -c \"gunzip -c $staging_file | psql wittmannpokerleague\"",
     onlyif => 'su - postgres -c "psql wittmannpokerleague -c \'\\d\' -qt"|wc -w|grep \'^0$\'',
-    require => [Postgresql::Server::Db['wittmannpokerleague'], Package['wget'], File[$staging_dir]],
+    require => [Postgresql::Server::Db['wittmannpokerleague'], Package['wget'], Package['gzip'], File[$staging_dir]],
   }
 
   $catalina_base = '/usr/share/tomcat'

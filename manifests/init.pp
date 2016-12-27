@@ -73,14 +73,13 @@ class wpl(
   # Install Java
   class { 'java': }->
 
-  # Install Apache Tomcat server from EPEL
-  class { 'tomcat':
-    install_from_source => false,
-  }->
-  class { 'epel': }->
-  tomcat::instance{ 'default':
-      package_name => 'tomcat',
-  }->
+  # Install comcat from source
+  tomcat::install { $catalina_base:
+    source_url => 'http://mirror.dkm.cz/apache/tomcat/tomcat-7/v7.0.73/bin/apache-tomcat-7.0.73.tar.gz',
+  }
+  tomcat::instance { 'default':
+    catalina_home => $catalina_base,
+  }
 
   # Disable default HTTP connector
   tomcat::config::server::connector { 'tomcat-http':
@@ -99,13 +98,6 @@ class wpl(
       'redirectPort' => '8080'
     },
     notify => Tomcat::Service['default'],
-  }->
-
-  # Start Apache Tomcat service
-  tomcat::service { 'default':
-    use_jsvc     => false,
-    use_init     => true,
-    service_name => 'tomcat',
   }->
 
   tomcat::war { 'wpl':

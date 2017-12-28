@@ -1,0 +1,37 @@
+{
+  "name": "fhrbek-wpl",
+  "version": "0.1.0",
+  "author": "fhrbek",
+  "summary": "WPL Server Configuration",
+  "license": "Apache-2.0",
+  "source": "https://github.com/fhrbek/wpl",
+  "project_page": "https://github.com/fhrbek/wpl",
+  "issues_url": "https://github.com/fhrbek/wpl/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs-stdlib",
+      "version_requirement": ">= 1.0.0"
+    },
+    {
+      "name": "puppetlabs-apache",
+      "version_requirement": ">= 0.9.0"
+    },
+    {
+      "name": "puppetlabs-java",
+      "version_requirement": ">= 1.4.2"
+    },
+    {
+      "name": "puppetlabs-tomcat",
+      "version_requirement": ">= 1.3.2"
+    },
+    {
+      "name": "puppetlabs-postgresql",
+      "version_requirement": ">= 4.6.0"
+    },
+    {
+      "name": "bashtoni-timezone",
+      "version_requirement": ">= 1.0.0"
+    }
+  ],
+  "data_provider": null
+}

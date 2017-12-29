@@ -68,18 +68,19 @@ class wpl(
     require => [Postgresql::Server::Db['wittmannpokerleague'], Package['wget'], Package['gzip'], File[$staging_dir]],
   }
 
-  $catalina_base = '/usr/share/tomcat'
+  $catalina_base = '/usr/share/tomcat8'
 
   # Install Java
   class { 'java': }->
 
   # Install Apache Tomcat server from EPEL
-  class { 'tomcat':
+  tomcat::install {'/usr/share/tomcat8':
     install_from_source => false,
+    package_name => 'tomcat8',
   }->
-  class { 'epel': }->
-  tomcat::instance{ 'default':
-      package_name => 'tomcat',
+  tomcat::instance{ 'tomcat8':
+    catalina_home => $catalina_base,
+    manage_service => false,
   }->
 
   # Disable default HTTP connector
@@ -87,7 +88,7 @@ class wpl(
     catalina_base => $catalina_base,
     connector_ensure => absent,
     protocol => 'HTTP/1.1',
-    notify => Tomcat::Service['default'],
+    notify => Service['tomcat8'],
   }->
 
   # Enable AJP connector
@@ -98,14 +99,7 @@ class wpl(
     additional_attributes => {
       'redirectPort' => '8080'
     },
-    notify => Tomcat::Service['default'],
-  }->
-
-  # Start Apache Tomcat service
-  tomcat::service { 'default':
-    use_jsvc     => false,
-    use_init     => true,
-    service_name => 'tomcat',
+    notify => Service['tomcat8'],
   }->
 
   tomcat::war { 'wpl':
@@ -113,6 +107,10 @@ class wpl(
     war_name => 'ROOT.war',
     war_source => 'https://github.com/fhrbek/wpl-staging/raw/master/wpl.war',
     require => Exec['load_db']
+  }->
+
+  service {'tomcat8':
+    ensure => running
   }
 
   # Install Apache HTTP server
@@ -120,7 +118,7 @@ class wpl(
     default_vhost => false,
     purge_configs => false,
     mpm_module    => false,
-    require       => Tomcat::Service['default'],
+    require       => Service['tomcat8'],
   }
 
   # Minimize resources for Apache HTTP server

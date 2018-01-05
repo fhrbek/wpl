@@ -106,11 +106,12 @@ class wpl(
     catalina_base => $catalina_base,
     war_name => 'ROOT.war',
     war_source => 'https://github.com/fhrbek/wpl-staging/raw/master/wpl.war',
-    require => Exec['load_db']
+    require => Exec['load_db'],
   }->
 
   service {'tomcat8':
-    ensure => running
+    ensure => running,
+    enable => true,
   }
 
   # Install Apache HTTP server
